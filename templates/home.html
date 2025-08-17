@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NyayaSaathi — AI Guide to Indian Law</title>
+  <meta name="description"
+    content="AI-powered guide to Indian legal information: contracts, labour & employment, property, family, criminal, and civil disputes." />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Scripts -->
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <style>
+    /* Chat Footer & Input */
+    .chat-footer {
+      padding: 12px;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: center;
+    }
+
+    .chat-input {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-radius: 50px;
+      padding: 8px 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .chat-input .icon {
+      color: #6b7280;
+      margin-right: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 15px;
+      color: #111827;
+      padding: 8px 0;
+    }
+
+    .chat-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-left: 10px;
+    }
+
+    .send-btn,
+    .stop-btn {
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+      color: #fff;
+    }
+
+    .send-btn {
+      background: #2563eb;
+    }
+
+    .send-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .stop-btn {
+      background: #ef4444;
+    }
+
+    .stop-btn:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+
+    /* Chat messages */
+    #chat {
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f3f4f6;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .user {
+      margin-bottom: 8px;
+      text-align: right;
+    }
+
+    .ai {
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    .typing {
+      font-style: italic;
+      color: #6b7280;
+    }
+
+    #chat {
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f3f4f6;
+      border-radius: 12px;
+    }
+
+    .message-box {
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      max-width: 80%;
+    }
+
+    .message-box.user {
+      background-color: #e5f1ff;
+      color: #111;
+      margin-left: auto;
+      text-align: left;
+    }
+
+    .message-box.ai {
+      background-color: #e5f1ff;
+      color: #111;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    .message-box b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .chat-input {
+        padding: 6px 10px;
+      }
+
+      .chat-input input {
+        font-size: 14px;
+      }
+
+      .chat-toolbar button {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo"><i class="fas fa-balance-scale"></i></div>
+        <div>
+          <div class="title">NyayaSaathi</div>
+          <div class="subtitle">AI-powered guide to Indian legal information</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="grid">
+
+      <!-- Left Panel (Controls) -->
+      <aside class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Ask smarter</div>
+          <div class="subtitle">Add context to improve answers</div>
+        </div>
+        <div class="panel-body">
+          <div class="controls">
+            <div class="field">
+              <label for="category">Topic / Act</label>
+              <select id="category">
+                <option value="general">General legal info</option>
+                <option value="contract">Contract law</option>
+                <option value="labour">Labour & Employment</option>
+                <option value="property">Property & Transfer</option>
+                <option value="family">Family</option>
+                <option value="criminal">Criminal</option>
+                <option value="civil">Civil disputes</option>
+                <option value="it">Cyber/IT</option>
+                <option value="rtiform">RTI</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="jurisdiction">State / Jurisdiction (optional)</label>
+              <input id="jurisdiction" type="text" placeholder="e.g., Karnataka, Delhi NCT" />
+            </div>
+            <div class="field">
+              <label for="language">Preferred language</label>
+              <select id="language">
+                <option value="en" selected>English</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Panel (Chat) -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Chat</div>
+        </div>
+
+        <div id="chat" role="log" aria-live="polite"></div>
+
+        <div class="chat-footer">
+          <form id="chatForm" class="chat-input" autocomplete="off">
+            <i class="icon" data-lucide="message-square"></i>
+            <input id="message" type="text"
+              placeholder="Ask about contracts, employment, property, family, criminal, civil…" required
+              minlength="2" />
+            <div class="chat-toolbar">
+              <button type="submit" class="send-btn" id="sendBtn"><i data-lucide="send"></i></button>
+              <button type="button" class="stop-btn" id="stopBtn" disabled><i data-lucide="square"></i></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Chat JS -->
+  <script>
+    const chatDiv = document.getElementById("chat");
+    const chatForm = document.getElementById("chatForm");
+    const messageInput = document.getElementById("message");
+    const sendBtn = document.getElementById("sendBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    function appendMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = `message-box ${sender}`; // add class for styling
+
+      if (sender === "ai") {
+        // Remove markdown symbols
+        text = text.replace(/\*\*/g, "").replace(/\*/g, "");
+
+        // Format headings
+        const headings = [
+          "Short answer:",
+          "Relevant law sections/case names:",
+          "Explanation:",
+          "Suggested next steps:",
+          "Sources:",
+          "Evidence:",
+          "FIR:"
+        ];
+
+        let formattedText = text;
+        headings.forEach(heading => {
+          const regex = new RegExp(heading, "g");
+          formattedText = formattedText.replace(regex, `<b><b>${heading}</b></b><br>`);
+        });
+
+        // Preserve new lines
+        formattedText = formattedText.replace(/\n/g, "<br>");
+
+        div.innerHTML = formattedText;
+      } else {
+        div.textContent = text; // user message
+      }
+
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+
+    function showTyping() {
+      const typingDiv = document.createElement("div");
+      typingDiv.className = "ai typing";
+      typingDiv.id = "typingIndicator";
+      typingDiv.textContent = "AI is typing...";
+      chatDiv.appendChild(typingDiv);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function removeTyping() {
+      const typingDiv = document.getElementById("typingIndicator");
+      if (typingDiv) typingDiv.remove();
+    }
+
+    chatForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const topic = document.getElementById("category").value;
+      const state = document.getElementById("jurisdiction").value;
+      const language = document.getElementById("language").value;
+      const message = messageInput.value;
+
+      appendMessage("user", message);
+      messageInput.value = "";
+      sendBtn.disabled = true;
+      showTyping();
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, state, language, message })
+        });
+
+        if (!res.ok) throw new Error("Network response failed");
+
+        const data = await res.json();
+        removeTyping();
+        appendMessage("ai", data.reply);
+      } catch (err) {
+        removeTyping();
+        appendMessage("ai", "⚠️ Sorry, something went wrong. Please try again.");
+        console.error(err);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+
+</html>
