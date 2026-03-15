@@ -31,7 +31,7 @@
       display: flex;
       justify-content: center;
     }
-
+    
     .chat-input {
       display: flex;
       align-items: center;
@@ -195,8 +195,8 @@
       <!-- Left Panel (Controls) -->
       <aside class="panel">
         <div class="panel-header">
-          <div class="panel-title">Ask smarter</div>
-          <div class="subtitle">Add context to improve answers</div>
+          <!-- <div class="panel-title">Ask smarter</div>
+          <div class="subtitle">Add context to improve answers</div> -->
         </div>
         <div class="panel-body">
           <div class="controls">
@@ -204,12 +204,10 @@
               <label for="category">Topic / Act</label>
               <select id="category">
                 <option value="general">General legal info</option>
-                <option value="contract">Contract law</option>
                 <option value="labour">Labour & Employment</option>
                 <option value="property">Property & Transfer</option>
                 <option value="family">Family</option>
                 <option value="criminal">Criminal</option>
-                <option value="civil">Civil disputes</option>
                 <option value="it">Cyber/IT</option>
                 <option value="rtiform">RTI</option>
               </select>
@@ -224,25 +222,63 @@
                 <option value="en" selected>English</option>
                 <option value="hi">Hindi (हिन्दी)</option>
               </select>
+              <div class="logout-container">
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+              </div>
+              <div style="display:flex;">
+
+              <!-- LEFT SIDE HISTORY PANEL -->
+              <div id="historyPanel" style="
+                width:280px;
+                height:100vh;
+                overflow-y:auto;
+                background:#f8f8f8;
+                border-right:1px solid #ddd;
+                padding:20px;"> 
+
+              <h2 style="font-size:20px; margin-bottom:15px;">Previous Chats</h2>
+
+              <div id="historyList"></div>
+            </div>
+
+   
+
             </div>
           </div>
         </div>
       </aside>
 
       <!-- Right Panel (Chat) -->
-      <section class="panel">
+      <!-- <section class="panel">
         <div class="panel-header">
           <div class="panel-title">Chat</div>
         </div>
 
-        <div id="chat" role="log" aria-live="polite"></div>
+        <div id="chat" role="log" aria-live="polite"></div> -->
+        <section class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Chat</div>
+  </div>
+
+  <!-- HISTORY DISPLAY BOX -->
+  <div id="chatDisplay" style="
+      background:#fff;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:15px;
+      border:1px solid #ddd;
+      min-height:120px;
+      display:none;">
+  </div>
+
+  <!-- MAIN CHAT WINDOW -->
+  <div id="chat" role="log" aria-live="polite"></div>
+
 
         <div class="chat-footer">
           <form id="chatForm" class="chat-input" autocomplete="off">
             <i class="icon" data-lucide="message-square"></i>
-            <input id="message" type="text"
-              placeholder="Ask about contracts, employment, property, family, criminal, civil…" required
-              minlength="2" />
+            <input id="message" type="text"/>
             <div class="chat-toolbar">
               <button type="submit" class="send-btn" id="sendBtn"><i data-lucide="send"></i></button>
               <button type="button" class="stop-btn" id="stopBtn" disabled><i data-lucide="square"></i></button>
@@ -346,7 +382,62 @@
         sendBtn.disabled = false;
       }
     });
-  </script>
+
+    // LOAD HISTORY WHEN PAGE LOADS
+    window.onload = function () {
+      fetch("/history")
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById("historyList");
+            list.innerHTML = "";
+
+            data.history.forEach((chat, index) => {
+                list.innerHTML += `
+                    <div class="historyItem"
+                        data-user="${chat.user_message}"
+                        data-bot="${chat.bot_reply}"
+                        style="
+                            background:#fff;
+                            padding:10px;
+                            margin-bottom:8px;
+                            border-radius:6px;
+                            cursor:pointer;
+                            border:1px solid #ddd;">
+                        
+                        <strong>${chat.title}</strong><br>
+                        <small style="color:gray;">${chat.time}</small>
+                    </div>
+                `;
+            });
+
+            // ON CLICK — SHOW CHAT DETAILS
+        //     
+        document.querySelectorAll(".historyItem").forEach(item => {
+  item.addEventListener("click", function () {
+
+      // Show the chat display box
+      document.getElementById("chatDisplay").style.display = "block";
+
+      document.getElementById("chatDisplay").innerHTML = `
+          <div style="
+              background:#f0f0f0;
+              padding:20px;
+              border-radius:10px;">
+
+              <p><strong>You Asked:</strong></p>
+              <p>${this.dataset.user}</p>
+
+              <hr>
+
+              <p><strong>Bot Answer:</strong></p>
+              <p>${this.dataset.bot}</p>
+          </div>
+      `;
+  });
+});
+        });
+    };
+</script>
 </body>
 
 </html>

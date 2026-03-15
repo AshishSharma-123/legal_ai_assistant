@@ -3,3 +3,10 @@ google-generativeai
 python-dotenv
 requests
 gunicorn
+Flask
+mysql-connector-python
+flask-bcrypt
+google-generativeai
+python-dotenv
+requests
+gunicorn
